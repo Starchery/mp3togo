@@ -8,12 +8,12 @@ general inefficiency, and all the dependencies. So I'm starting over, in Go this
 This program is intended for beatmakers who often need to download many youtube videos at a time
 and convert them all to a suitable audio format for easy sampling.
 
-This is a work in progress. It's currently based on the [ytdl](github.com/rylio/ytdl) library and calls
+This is a work in progress. It's currently based on the [ytdl](https://github.com/rylio/ytdl) library and calls
 on FFmpeg to do the conversion. Until I can figure out how to do it myself, that means you'll need to
 have FFmpeg installed to use this. Why wouldn't you have FFmpeg, anyway? It's a great program.
 
 ## Installation
-TBA. For now, see [Building.](Building)
+TBA. For now, see [Building.](https://github.com/Starchery/mp3togo#building)
 
 ## Building
 Requirements: Go 1.14. 1.13 probably works too.

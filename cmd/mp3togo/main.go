@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 
@@ -15,15 +16,24 @@ import (
 const maxConcurrentDownloads = 5
 
 type app struct {
-	videos  chan string
-	started chan bool
-	wg      sync.WaitGroup
+	videos    chan string
+	toConvert chan string
+	started   chan bool
+	ffmpeg    *exec.Cmd
+	wg        sync.WaitGroup
 }
 
 func new() *app {
 	v := make(chan string, maxConcurrentDownloads)
+	t := make(chan string, maxConcurrentDownloads)
 	s := make(chan bool, 1)
-	return &app{videos: v, started: s}
+	f := exec.Command("ffmpeg", "-vn", "-i")
+	return &app{
+		videos:    v,
+		toConvert: t,
+		started:   s,
+		ffmpeg:    f,
+	}
 }
 
 func (a *app) readVideos() {
@@ -55,6 +65,7 @@ func (a *app) downloadVideo() {
 	url, open := <-a.videos
 	if !open {
 		fmt.Println("Channel closed")
+		close(a.toConvert)
 		return
 	}
 
@@ -71,6 +82,25 @@ func (a *app) downloadVideo() {
 	defer file.Close()
 
 	vid.Download(best, file)
+	a.toConvert <- filename
+	go a.convertVideo(vid.Title)
+	a.wg.Add(1)
+}
+
+func (a *app) convertVideo(vidName string) {
+	defer a.wg.Done()
+
+	filename, open := <-a.toConvert
+	if !open {
+		fmt.Println("Channel closed")
+		return
+	}
+
+	newName := vidName + ".mp3"
+	a.ffmpeg.Args = append(a.ffmpeg.Args, filename, newName)
+
+	out, err := a.ffmpeg.Output()
+	fmt.Println("[mp3] Finished:", string(out), err)
 }
 
 func main() {
